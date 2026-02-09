@@ -4,25 +4,15 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: true,
-      unique: true,
+      required: [true, "Username is required"],
+      unique: true, // Now strictly case-sensitive: "Hello" != "hello"
+      trim: true, // Keeps " hello" from being different than "hello"
     },
-
-    password: {
-      type: String,
-      required: true,
-    },
-
-    // New bio field added here
-    bio: {
-      type: String,
-      default: "Hey there! I am using ReacTalk", // Providing a default message
-      maxLength: 160, // Good practice for profile bios
-    },
+    password: { type: String, required: true },
+    bio: { type: String, default: "Hey there! I am using ReacTalk" },
+    profilePic: { type: String, default: "" }, // Add this
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 const User = mongoose.model("User", userSchema);

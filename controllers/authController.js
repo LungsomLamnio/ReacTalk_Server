@@ -10,7 +10,7 @@ export const signup = async (req, res) => {
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exist" });
+      return res.status(400).json({ message: "Username already taken" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -44,7 +44,6 @@ export const login = async (req, res) => {
     const { username, password } = req.body;
 
     const user = await User.findOne({ username });
-
     if (!user) {
       return res.status(400).json({ message: "Invalid username or password" });
     }
@@ -85,5 +84,26 @@ export const getMe = async (req, res) => {
       message: "Internal Server Error",
       error: err.message,
     });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { username, bio } = req.body;
+    const updateData = { username, bio };
+
+    if (req.file) {
+      updateData.profilePic = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updateData },
+      { new: true },
+    ).select("-password");
+
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: "Update failed", error: err.message });
   }
 };
