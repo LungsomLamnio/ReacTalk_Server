@@ -1,19 +1,17 @@
 import jwt from "jsonwebtoken";
 
 export const verifyToken = (req, res, next) => {
-  const token = req.heaer("Authorization")?.split(" ")[1];
+  const token = req.header("Authorization")?.split(" ")[1];
 
   if (!token) {
     return res
       .status(401)
-      .json({ message: "Acccess Denied. No Token Provided." });
+      .json({ message: "Access Denied. No Token Provided." });
   }
 
   try {
-    const verified = jwt.verify(
-      token,
-      process.env.JWT_SECRET || "my_super_secret_code",
-    );
+    // This now correctly uses the secret from your .env
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
     next();
   } catch (err) {

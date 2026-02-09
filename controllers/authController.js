@@ -2,7 +2,7 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "my_super_secret_code";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const signup = async (req, res) => {
   try {
@@ -65,5 +65,25 @@ export const login = async (req, res) => {
     res
       .status(500)
       .json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    // The verifyToken middleware adds the decoded user ID to req.user
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Returns the user's username and any other fields like 'bio'
+    res.status(200).json(user);
+  } catch (err) {
+    console.error("Error in getMe:", err.message);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 };
