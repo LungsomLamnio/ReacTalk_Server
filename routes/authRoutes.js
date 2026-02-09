@@ -1,5 +1,10 @@
 import express from "express";
-import { signup, login, getMe } from "../controllers/authController.js";
+import {
+  signup,
+  login,
+  getMe,
+  searchUsers,
+} from "../controllers/authController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 import { updateProfile } from "../controllers/authController.js";
 import { upload } from "../middlewares/uploadMiddleware.js";
@@ -13,5 +18,7 @@ router.post("/login", login);
 router.get("/me", verifyToken, getMe);
 
 router.put("/update", verifyToken, upload.single("profilePic"), updateProfile);
+
+router.get("/search", verifyToken, searchUsers);
 
 export default router;

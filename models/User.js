@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
 
+// models/User.js
 const userSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: [true, "Username is required"],
-      unique: true, // Now strictly case-sensitive: "Hello" != "hello"
-      trim: true, // Keeps " hello" from being different than "hello"
-    },
+    username: { type: String, required: true, unique: true, trim: true },
     password: { type: String, required: true },
     bio: { type: String, default: "Hey there! I am using ReacTalk" },
-    profilePic: { type: String, default: "" }, // Add this
+    profilePic: { type: String, default: "" },
+
+    // New fields for Social Connectivity
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

@@ -69,15 +69,16 @@ export const login = async (req, res) => {
 
 export const getMe = async (req, res) => {
   try {
-    // The verifyToken middleware adds the decoded user ID to req.user
     const user = await User.findById(req.user.id).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    // Return counts along with user data
+    const userData = {
+      ...user._doc,
+      followersCount: user.followers.length,
+      followingCount: user.following.length,
+    };
 
-    // Returns the user's username and any other fields like 'bio'
-    res.status(200).json(user);
+    res.status(200).json(userData);
   } catch (err) {
     console.error("Error in getMe:", err.message);
     res.status(500).json({
@@ -105,5 +106,25 @@ export const updateProfile = async (req, res) => {
     res.status(200).json(updatedUser);
   } catch (err) {
     res.status(500).json({ message: "Update failed", error: err.message });
+  }
+};
+
+// controllers/authController.js
+export const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) return res.status(200).json([]);
+
+    // Finds users where username contains the query string (Case-Sensitive)
+    const users = await User.find({
+      username: { $regex: query }, // Removed 'i' flag to keep it case-sensitive
+      _id: { $ne: req.user.id }, // Don't show the logged-in user in search
+    })
+      .select("username profilePic bio")
+      .limit(10);
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Search failed", error: err.message });
   }
 };
