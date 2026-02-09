@@ -1,5 +1,8 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "my_super_secret_code";
 
 export const signup = async (req, res) => {
   try {
@@ -20,7 +23,15 @@ export const signup = async (req, res) => {
 
     await newUser.save();
 
-    res.status(201).json({ message: "User created successfully" });
+    const token = jwt.sign({ id: newUser._id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.status(201).json({
+      message: "User created successfully",
+      token,
+      user: { id: newUser._id, username },
+    });
   } catch (err) {
     res
       .status(500)
@@ -43,8 +54,11 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid username or password" });
     }
 
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+
     return res.status(200).json({
       message: "Login Successfully",
+      token,
       user: { id: user._id, username: username },
     });
   } catch (err) {
