@@ -1,24 +1,10 @@
 import express from "express";
-import {
-  signup,
-  login,
-  getMe,
-  searchUsers,
-} from "../controllers/authController.js";
-import { verifyToken } from "../middlewares/authMiddleware.js";
-import { updateProfile } from "../controllers/authController.js";
-import { upload } from "../middlewares/uploadMiddleware.js";
+import { signup, login } from "../controllers/authController.js";
 
 const router = express.Router();
 
+// Public routes for account creation and entry
 router.post("/signup", signup);
 router.post("/login", login);
-
-// Protected route - Fetches the logged-in user's details
-router.get("/me", verifyToken, getMe);
-
-router.put("/update", verifyToken, upload.single("profilePic"), updateProfile);
-
-router.get("/search", verifyToken, searchUsers);
 
 export default router;
