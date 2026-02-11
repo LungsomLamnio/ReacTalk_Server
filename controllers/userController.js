@@ -33,8 +33,11 @@ export const updateProfile = async (req, res) => {
 export const searchUsers = async (req, res) => {
   try {
     const { query } = req.query;
+    if (!query) return res.status(200).json([]);
+    
     const users = await User.find({
-      username: { $regex: query },
+      // Added 'i' flag for case-insensitive search
+      username: { $regex: query, $options: 'i' },
       _id: { $ne: req.user.id },
     })
       .select("username profilePic bio")
@@ -49,7 +52,14 @@ export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.status(200).json(user);
+
+    // Backend does the heavy lifting
+    const isFollowing = user.followers.map(id => id.toString()).includes(req.user.id);
+
+    res.status(200).json({
+      ...user._doc,
+      isFollowing // Send this directly to the frontend
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -60,7 +70,13 @@ export const followUser = async (req, res) => {
     const targetUser = await User.findById(req.params.id);
     const currentUser = await User.findById(req.user.id);
 
-    const isFollowing = targetUser.followers.includes(req.user.id);
+    if (!targetUser || !currentUser) return res.status(404).json({ message: "User not found" });
+
+    // Normalize IDs to strings for comparison
+    const isFollowing = targetUser.followers.some(
+      (id) => id.toString() === req.user.id.toString()
+    );
+
     if (isFollowing) {
       targetUser.followers.pull(req.user.id);
       currentUser.following.pull(req.params.id);
@@ -71,7 +87,9 @@ export const followUser = async (req, res) => {
 
     await targetUser.save();
     await currentUser.save();
-    res.status(200).json({ message: isFollowing ? "Unfollowed" : "Followed" });
+    
+    // Return updated user to frontend to sync counts and button state
+    res.status(200).json(targetUser);
   } catch (err) {
     res.status(500).json({ message: "Action failed" });
   }
