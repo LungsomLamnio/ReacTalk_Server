@@ -6,12 +6,15 @@ import cors from "cors";
 
 const app = express();
 
+const corsOptions = {
+  origin: "https://reactalk.vercel.app", 
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
 app.use(
-  cors({
-    origin: "https://reactalk.vercel.app/",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-  }),
+  cors(corsOptions),
 );
 
 app.use(express.json());
