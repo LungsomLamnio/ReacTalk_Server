@@ -7,7 +7,6 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// Use mongoose.models.Message || ... to prevent re-compilation
 const Message =
   mongoose.models.Message || mongoose.model("Message", messageSchema);
 

@@ -18,7 +18,6 @@ export const updateProfile = async (req, res) => {
     const { username, bio } = req.body;
     const updateData = { username, bio };
 
-    // When using Cloudinary, req.file.path is the full hosted URL
     if (req.file) {
       updateData.profilePic = req.file.path; 
     }
@@ -42,7 +41,6 @@ export const searchUsers = async (req, res) => {
     if (!query) return res.status(200).json([]);
     
     const users = await User.find({
-      // Added 'i' flag for case-insensitive search
       username: { $regex: query, $options: 'i' },
       _id: { $ne: req.user.id },
     })
@@ -59,12 +57,11 @@ export const getUserById = async (req, res) => {
     const user = await User.findById(req.params.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Backend does the heavy lifting
     const isFollowing = user.followers.map(id => id.toString()).includes(req.user.id);
 
     res.status(200).json({
       ...user._doc,
-      isFollowing // Send this directly to the frontend
+      isFollowing
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -78,7 +75,6 @@ export const followUser = async (req, res) => {
 
     if (!targetUser || !currentUser) return res.status(404).json({ message: "User not found" });
 
-    // Normalize IDs to strings for comparison
     const isFollowing = targetUser.followers.some(
       (id) => id.toString() === req.user.id.toString()
     );
@@ -94,7 +90,6 @@ export const followUser = async (req, res) => {
     await targetUser.save();
     await currentUser.save();
     
-    // Return updated user to frontend to sync counts and button state
     res.status(200).json(targetUser);
   } catch (err) {
     res.status(500).json({ message: "Action failed" });

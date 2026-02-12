@@ -10,7 +10,6 @@ export const verifyToken = (req, res, next) => {
   }
 
   try {
-    // This now correctly uses the secret from your .env
     const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
     next();

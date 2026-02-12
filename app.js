@@ -17,8 +17,8 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-app.use("/api/auth", authRoutes); // Handles signup and login
-app.use("/api/user", userRoutes); // Handles profiles, search, and following
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/messages", messageRoutes);
 
 app.get("/", (req, res) => {

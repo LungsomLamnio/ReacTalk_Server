@@ -1,8 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 
-// --- Conversation Logic ---
-
 export const getOrCreateConversation = async (req, res) => {
   const { receiverId } = req.body;
   const senderId = req.user.id;
@@ -24,7 +22,6 @@ export const getOrCreateConversation = async (req, res) => {
   }
 };
 
-// --- Message Logic ---
 
 export const sendMessage = async (req, res) => {
   try {
@@ -37,10 +34,9 @@ export const sendMessage = async (req, res) => {
 
     const savedMessage = await newMessage.save();
 
-    // UPDATE: Refresh the conversation timestamp and last message
     await Conversation.findByIdAndUpdate(conversationId, {
       lastMessageText: text,
-      updatedAt: Date.now(), // This is the key for sorting
+      updatedAt: Date.now(),
     });
 
     res.status(201).json(savedMessage);
@@ -52,16 +48,14 @@ export const sendMessage = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const currentUserId = req.user.id; // The logged-in user making the request
+    const currentUserId = req.user.id;
 
     const messages = await Message.find({ conversationId })
       .sort({ createdAt: 1 });
 
-    // Verify "isMe" status on the backend
     const verifiedMessages = messages.map((m) => {
       return {
         ...m._doc,
-        // Backend comparison is absolute
         isMe: m.sender.toString() === currentUserId.toString()
       };
     });
@@ -72,15 +66,10 @@ export const getMessages = async (req, res) => {
   }
 };
 
-// server/controllers/messageController.js
-// server/controllers/messageController.js
 export const getRecentChats = async (req, res) => {
   try {
     const currentUserId = req.user.id;
 
-    // 1. Find conversations involving me
-    // 2. Populate 'members' to get names and profile pics
-    // 3. Sort by 'updatedAt' so the latest message is at the top
     const conversations = await Conversation.find({
       members: { $in: [currentUserId] }
     })
@@ -88,7 +77,6 @@ export const getRecentChats = async (req, res) => {
     .sort({ updatedAt: -1 });
 
     const formattedChats = conversations.map(conv => {
-      // Find the user who is NOT me
       const otherUser = conv.members.find(m => m._id.toString() !== currentUserId);
       
       return {
@@ -102,7 +90,7 @@ export const getRecentChats = async (req, res) => {
 
     res.status(200).json(formattedChats);
   } catch (err) {
-    console.error("Backend Error:", err); // Check your terminal for this!
+    console.error("Backend Error:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
