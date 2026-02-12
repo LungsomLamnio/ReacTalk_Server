@@ -17,15 +17,21 @@ export const updateProfile = async (req, res) => {
   try {
     const { username, bio } = req.body;
     const updateData = { username, bio };
-    if (req.file) updateData.profilePic = `/uploads/${req.file.filename}`;
+
+    // When using Cloudinary, req.file.path is the full hosted URL
+    if (req.file) {
+      updateData.profilePic = req.file.path; 
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { $set: updateData },
       { new: true },
     ).select("-password");
+
     res.status(200).json(updatedUser);
   } catch (err) {
+    console.error("Update Error:", err);
     res.status(500).json({ message: "Update failed" });
   }
 };
