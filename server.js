@@ -10,8 +10,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "https://reactalk.vercel.app/",
+    origin: "https://reactalk.vercel.app",
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -61,8 +62,7 @@ io.on("connection", (socket) => {
   });
 });
 
-
-
 server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+  // Useful for Render logs to know which port is being used
+  console.log(`Server listening on port: ${PORT}`);
 });
