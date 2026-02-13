@@ -3,21 +3,25 @@ import http from "http";
 import { Server } from "socket.io";
 import app from "./app.js";
 import connectDB from "./db/db.js";
+import Message from "./models/Message.js"; 
 
 connectDB();
 
 const server = http.createServer(app);
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(",") 
+  : ["http://localhost:5173"];
+
 const io = new Server(server, {
   cors: {
-    origin: "https://reactalk.vercel.app",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
 const PORT = process.env.PORT || 3001;
-
 let onlineUsers = new Map();
 
 io.on("connection", (socket) => {
@@ -25,23 +29,46 @@ io.on("connection", (socket) => {
     if (userId && userId !== "null") {
       const cleanUserId = String(userId).trim();
       onlineUsers.set(cleanUserId, socket.id);
-      
       console.log(`User Active: ${cleanUserId} on socket ${socket.id}`);
       io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
     }
   });
 
-  socket.on("sendMessage", ({ senderId, receiverId, text }) => {
+  socket.on("sendMessage", async ({ senderId, receiverId, text, messageId }) => {
     const targetSocketId = onlineUsers.get(String(receiverId));
-    
-    console.log(`Routing from ${senderId} to ${receiverId} (Socket: ${targetSocketId})`);
+    let status = "sent";
 
     if (targetSocketId) {
+      status = "received";
       io.to(targetSocketId).emit("getMessage", {
         senderId: String(senderId),
         text,
+        messageId,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       });
+
+      socket.emit("messageStatusUpdate", { messageId, status: "received", receiverId });
+      
+      await Message.findByIdAndUpdate(messageId, { status: "received" });
+    }
+  });
+
+  socket.on("markAsSeen", async ({ conversationId, seenBy, senderId }) => {
+    try {
+      await Message.updateMany(
+        { conversationId, senderId, status: { $ne: "seen" } },
+        { $set: { status: "seen" } }
+      );
+
+      const senderSocketId = onlineUsers.get(String(senderId));
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesSeen", { 
+          conversationId, 
+          seenBy 
+        });
+      }
+    } catch (err) {
+      console.error("Error marking messages as seen:", err);
     }
   });
 
@@ -54,15 +81,12 @@ io.on("connection", (socket) => {
         break;
       }
     }
-    
     if (disconnectedUser) {
-      console.log(`User Offline: ${disconnectedUser}`);
       io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
     }
   });
 });
 
 server.listen(PORT, () => {
-  // Useful for Render logs to know which port is being used
   console.log(`Server listening on port: ${PORT}`);
 });
